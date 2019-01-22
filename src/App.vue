@@ -1,7 +1,13 @@
 <template>
   <div id="app">
-    <h2>vue-textarea-suggester</h2>
-    <p>外挂形式存在的suggester，可以与原生textarea或任何组件搭配使用。</p>
+    <center>
+      <h2>vue-textarea-suggester</h2>
+      <p>外挂形式存在的suggester，可以与原生textarea或任何组件搭配使用。</p>
+      <p>
+        <a href="https://github.com/blryli/vue-textarea-suggester">文档</a>
+      </p>
+    </center>
+    <h3>原生textarea</h3>
     <div class="box">
       <textarea ref="textarea" class="textarea" rows="10" @input="input"></textarea>
     </div>
@@ -12,14 +18,23 @@
       @check="check"
       @matched="matched"
       ref="suggester"
-    >
-      <template slot-scope="{data}">
-        <span>{{data.label}}</span>
-        <small>{{data.chineseName}}</small>
-      </template>
-    </vue-textarea-suggester>
-    <p>show: {{show}}</p>
-    <p>rules: {{rules}}</p>
+    />
+    <h3>md-editor2</h3>
+    <md-editor2
+      ref="md"
+      v-model="value"
+      :toolbars="toolbars"
+      :valueTecalculation="valueTecalculation"
+      @change="change"
+    />
+    <vue-textarea-suggester
+      v-model="mdShow"
+      :target="mdTarget"
+      :rules="rules"
+      @check="check"
+      @matched="matched"
+      ref="mdSuggester"
+    />
   </div>
 </template>
 
@@ -30,6 +45,34 @@ export default {
     return {
       show: false,
       target: null,
+      mdShow: false,
+      mdTarget: null,
+      value: `## suggester 显示时\n- 响应键盘上下左右按钮事件\n- 回车或鼠标左键点击item触发选中\n@blryli `,
+      toolbars: {
+        preview: true, // 预览
+        bold: true, // 粗体
+        italic: true, // 斜体
+        quote: true, // 引用
+        ol: true, // 有序列表
+        ul: true, // 无序列表
+        link: true, // 链接
+        imagelink: true, // 图片链接
+        code: true, // code
+        subfield: true, // 单双栏模式
+        fullscreen: true // 全屏编辑
+      },
+      valueTecalculation: params => {
+        this.rules.forEach(da => {
+          da.data.forEach(d => {
+            const rep = `${da.symbol}${d.label}`;
+            params = params.replace(
+              new RegExp(rep, "g"),
+              `[${da.symbol}${d.label}](/${d.label})`
+            );
+          });
+        });
+        return params;
+      },
       rules: [
         {
           symbol: "@",
@@ -57,6 +100,9 @@ export default {
     };
   },
   methods: {
+    change() {
+      this.$refs.mdSuggester.isShow();
+    },
     input() {
       this.$refs.suggester.isShow();
     },
@@ -70,6 +116,7 @@ export default {
   mounted() {
     this.$nextTick(() => {
       this.target = this.$refs.textarea;
+      this.mdTarget = document.querySelector(".auto-textarea-input");
     });
   }
 };
@@ -84,9 +131,10 @@ body {
   max-width: 1000px;
   margin: 0 auto;
 }
-.box{
+.box {
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, .1);
 }
 .textarea {
   width: 100%;

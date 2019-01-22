@@ -11,7 +11,6 @@
       <li v-for="(d, i) in data" :key="i" :class="{active: i === activeIndex}" @click="enter(i)">
         <slot :data="d">
           <strong>{{d.label}}</strong>
-          <small>{{d.chineseName}}</small>
         </slot>
       </li>
     </ul>
@@ -94,7 +93,7 @@ export default {
           this.show(startIndex);
           this.activeIndex = 0;
           this.$emit("input", true);
-          this.$emit("matched", strFrist);
+          !this.value && this.$emit("matched", strFrist);
           return;
         }
       }
