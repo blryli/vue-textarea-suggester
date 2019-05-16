@@ -66,7 +66,7 @@ export default {
           const rep = `${d.rule}${d.label}`;
           params = params.replace(
             new RegExp(rep, "g"),
-            `[${d.rule}${d.label}](/${d.label})`
+            `[${d.rule}${d.label}](http//:/${d.label})`
           );
         });
         return params;
@@ -172,7 +172,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style>
 body {
   margin: 0;
 }

@@ -1,0 +1,65 @@
+.vue-loading {
+  position: relative;
+  display: inline-block;
+}
+
+.vue-loading-spin {
+  transform: rotate(45deg);
+  animation: loadingRotate 1.2s infinite linear;
+}
+
+.vue-loading i {
+  border-radius: 100%;
+  display: block;
+  position: absolute;
+  opacity: 0.3;
+  animation: loadingSpinMove 0.7s infinite linear alternate;
+  transform-origin: 50% 50%;
+}
+
+@keyframes loadingSpinMove {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes loadingRotate {
+  to {
+    transform: rotate(405deg);
+  }
+}
+.suggester {
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0 0 5px rgba(27, 31, 35, 0.1);
+  cursor: pointer;
+  left: 0;
+  min-width: var(--minWidth);
+  position: fixed;
+  top: 0;
+  z-index: 1501;
+  font-size: 14px;
+}
+.suggester .suggester-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.suggester li {
+  border: 1px solid #dfe2e5;
+  padding: 5px 10px;
+}
+.suggester .suggester-list-item {
+  font-weight: 600;
+}
+.suggester .suggester-list-item:not(:last-child) {
+  border-bottom: 0;
+}
+.suggester .suggester-list-item:hover, .suggester .suggester-list-item.active, .suggester .suggester-list-item[aria-selected=true] {
+  background: #0366d6;
+  border-color: #0366d6;
+  color: #fff;
+  text-decoration: none;
+}
+.suggester .suggester-list-item small {
+  font-weight: 400;
+}

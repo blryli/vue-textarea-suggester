@@ -17,10 +17,13 @@ npm install vue-textarea-suggester --save
 ```js
 import VueTextaSuggester from 'vue-textarea-suggester'
 
+import 'vue-textarea-suggester/dist/vue-textarea-suggester.css'
+
 Vue.use(VueTextaSuggester)
 
 // 或者直接使用script导入
-<script src="https://unpkg.com/vue-textarea-suggester/dist/vue-textarea-suggester.js"></script>
+<link src="https://unpkg.com/vue-textarea-suggester/dist/vue-textarea-suggester.css"></link>
+<script src="https://unpkg.com/vue-textarea-suggester/dist/vue-textarea-suggester.min.js"></script>
 ```
 
 #### 搭配 原生textarea
@@ -267,4 +270,4 @@ export default {
 |  方法名 |    说明                    |   回调参数      |
 |-------- |------                      |------       |
 |matched  |匹配成功时触发    |    匹配规则对应的字符串，匹配内容，规则对象    |
-|change  |suggester 选中item时触发    |    匹配到的集合    |
+|change  |suggester 选中item时触发    |    提取的集合    |

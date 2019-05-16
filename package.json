@@ -1,42 +1,63 @@
 {
   "name": "vue-textarea-suggester",
-  "description": "A Vue.js project",
-  "version": "1.0.2",
-  "author": "lizhili <405549416@qq.com>",
+  "description": "A Vuejs suggester",
+  "version": "1.0.3",
+  "author": {
+    "name": "blryli",
+    "email": "405549416@qq.com"
+  },
+  "keywords": [
+    "vue",
+    "vuejs",
+    "rollup",
+    "template",
+    "suggester",
+    "editor",
+    "components"
+  ],
   "license": "MIT",
-  "private": false,
-  "main": "dist/vue-textarea-suggester.js",
+  "main": "dist/vue-textarea-suggester.umd.js",
+  "module": "dist/vue-textarea-suggester.esm.js",
+  "unpkg": "dist/vue-textarea-suggester.min.js",
+  "scripts": {
+    "build": "npm run build:browser && npm run build:es && npm run build:umd",
+    "build:browser": "rollup --config build/rollup.config.browser.js",
+    "build:es": "rollup --config build/rollup.config.es.js",
+    "build:umd": "rollup --config build/rollup.config.umd.js",
+    "dev": "cross-env NODE_ENV=development rollup --config build/rollup.config.es.js --watch",
+    "build:es5": "babel dist -d lib"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/blryli/vue-textarea-suggester"
+    "url": "git+https://github.com/blryli/vue-textarea-suggester.git"
   },
-  "scripts": {
-    "dev": "cross-env NODE_ENV=development webpack-dev-server --open --hot",
-    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
+  "bugs": {
+    "url": "https://github.com/blryli/vue-textarea-suggester/issues"
   },
-  "dependencies": {
-    "vue": "^2.5.11"
+  "homepage": "https://github.com/blryli/vue-textarea-suggester#readme",
+  "peerDependencies": {
+    "vue": "^2.6.10"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.4.3",
+    "@babel/core": "^7.4.3",
+    "@babel/preset-env": "^7.4.3",
+    "babel-plugin-module-resolver": "^3.2.0",
+    "cross-env": "^5.2.0",
+    "rollup": "^1.10.0",
+    "rollup-plugin-babel": "^4.3.2",
+    "rollup-plugin-commonjs": "^9.3.4",
+    "rollup-plugin-node-resolve": "^4.2.3",
+    "rollup-plugin-replace": "^2.2.0",
+    "rollup-plugin-sass": "^1.2.2",
+    "rollup-plugin-uglify": "^6.0.2",
+    "rollup-plugin-vue": "^5.0.0",
+    "vue": "^2.6.10",
+    "vue-template-compiler": "^2.6.10"
   },
   "browserslist": [
-    "> 1%",
+    "> 1%, not dead",
     "last 2 versions",
     "not ie <= 8"
-  ],
-  "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.6.0",
-    "babel-preset-stage-3": "^6.24.1",
-    "cross-env": "^5.0.5",
-    "css-loader": "^0.28.7",
-    "file-loader": "^1.1.4",
-    "md-editor2": "^0.1.12",
-    "node-sass": "^4.5.3",
-    "sass-loader": "^6.0.6",
-    "url-loader": "^1.1.2",
-    "vue-loader": "^13.0.5",
-    "vue-template-compiler": "^2.4.4",
-    "webpack": "^3.6.0",
-    "webpack-dev-server": "^2.9.1"
-  }
+  ]
 }

@@ -4,8 +4,8 @@
     :style="{'--minWidth': minWidth, 'display': matchedStr ? 'block' : 'none'}"
   >
     <ul v-show="matchedStr" class="suggester-list">
-      <li class="suggester-list-item" v-show="remote && loading">
-        <img width="18" src="../../assets/loading.gif" alt>
+      <li v-show="remote && loading">
+        <vue-loading />
       </li>
       <li
         class="suggester-list-item"
@@ -24,10 +24,12 @@
 
 <script>
 import { getCursorPos } from "./getCursorPos";
-import { on, off, debounce } from "../../utils/dom";
+import { on, off, debounce } from "utils/dom";
+import VueLoading from 'components/loading'
 
 export default {
   name: "vue-textarea-suggester",
+  components: { VueLoading },
   props: {
     value: {
       type: Array,
@@ -191,7 +193,7 @@ export default {
       }
       this.matchedStr = null;
       this.target.focus();
-      this.change()
+      this.change();
     }
   },
   mounted() {
@@ -208,43 +210,3 @@ export default {
   }
 };
 </script>
-
-<style lang="scss" scoped>
-.suggester {
-  background: #fff;
-  border-radius: 3px;
-  box-shadow: 0 0 5px rgba(27, 31, 35, 0.1);
-  cursor: pointer;
-  left: 0;
-  min-width: var(--minWidth);
-  position: fixed;
-  top: 0;
-  z-index: 1501;
-  font-size: 14px;
-  .suggester-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .suggester-list-item {
-    border: 1px solid #dfe2e5;
-    display: block;
-    font-weight: 600;
-    padding: 5px 10px;
-    &:not(:last-child) {
-      border-bottom: 0;
-    }
-    &:hover,
-    &.active,
-    &[aria-selected="true"] {
-      background: #0366d6;
-      border-color: #0366d6;
-      color: #fff;
-      text-decoration: none;
-    }
-    small {
-      font-weight: 400;
-    }
-  }
-}
-</style>
