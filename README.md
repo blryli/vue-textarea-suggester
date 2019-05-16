@@ -28,11 +28,10 @@ Vue.use(VueTextaSuggester)
 ```html
 <textarea ref="textarea" class="textarea" rows="10" @input="input"></textarea>
 <vue-textarea-suggester
-  v-model="show"
+  v-model="extracts"
   :target="target"
   :rules="rules"
   @matched="matched"
-  @check="check"
   ref="suggester"
 />
 ```
@@ -43,43 +42,28 @@ export default {
   name: "app",
   data() {
     return {
-      show: false,
       target: null,
+      extracts: [],
       rules: [
         {
-          symbol: "@",
-          data: [
-            {
-              label: "blryli"
-            },
-            {
-              label: "dongqiang"
-            }
-          ]
+          rule: /!/,
+          data: [{ label: "aaaa" }, { label: "bbbb" }]
         },
         {
-          symbol: "#",
-          data: [
-            {
-              label: "order001"
-            },
-            {
-              label: "order002"
-            }
-          ]
+          rule: /@/,
+          data: [{ label: "xxxx" }, { label: "yyyy" }]
         }
       ]
     };
   },
   methods: {
     input() {
-      this.$refs.suggester.isShow();
+      this.$refs.suggester.change();
     },
-    matched(symbol) {
-      console.log(`matched ${JSON.stringify(symbol)}`);
-    },
-    check(obj) {
-      console.log(`check ${JSON.stringify(obj)}`);
+    matched(rule, query, row) {
+      console.log(`rule ${JSON.stringify(rule)}`);
+      console.log(`query ${JSON.stringify(query)}`);
+      console.log(`row ${JSON.stringify(row)}`);
     }
   },
   mounted() {
@@ -109,14 +93,15 @@ Vue.use(MdEditor2)
   v-model="value"
   :toolbars="toolbars"
   :valueTecalculation="valueTecalculation"
-  :subfield="false"
   @change="change"
 />
 <vue-textarea-suggester
-  v-model="mdShow"
+  remote
+  v-model="extracts"
   :target="mdTarget"
   :rules="rules"
-  @check="check"
+  :options="options"
+  :loading="loading"
   @matched="matched"
   ref="mdSuggester"
 />
@@ -128,7 +113,6 @@ export default {
   name: "app",
   data() {
     return {
-      mdShow: false,
       mdTarget: null,
       value: `## suggester 显示时\n- 响应键盘上下左右按钮事件\n- 回车或鼠标左键点击item触发选中\n@blryli `,
       toolbars: {
@@ -141,56 +125,104 @@ export default {
         link: true, // 链接
         imagelink: true, // 图片链接
         code: true, // code
+        subfield: true, // 单双栏模式
         fullscreen: true // 全屏编辑
       },
-      // 替换规则
+      // 提取字段替换成需要的字段
       valueTecalculation: params => {
-        this.rules.forEach(da => {
-          da.data.forEach(d => {
-            const rep = `${da.symbol}${d.label}`;
-            params = params.replace(
-              new RegExp(rep, "g"),
-              `[${da.symbol}${d.label}](/${d.label})`
-            );
-          });
+        this.extracts.forEach(d => {
+          const rep = `${d.rule}${d.label}`;
+          params = params.replace(
+            new RegExp(rep, "g"),
+            `[${d.rule}${d.label}](/${d.label})`
+          );
         });
         return params;
       },
+      loading: false,
+      options: [],
+      extracts: [],
       rules: [
         {
-          symbol: "@",
-          data: [
-            {
-              label: "blryli"
-            },
-            {
-              label: "dongqiang"
-            }
-          ]
+          rule: /![A-Za-z0-9]+:/,
+          key: "number"
         },
         {
-          symbol: "#",
-          data: [
-            {
-              label: "order001"
-            },
-            {
-              label: "order002"
-            }
-          ]
+          rule: /!/,
+          key: "type",
+          enterAdd: ":",
+          enterExtract: false
+        },
+        {
+          rule: /@/,
+          key: "person"
         }
       ]
     };
   },
   methods: {
     change() {
-      this.$refs.mdSuggester.isShow();
+      this.$refs.mdSuggester.debouncedChange();
     },
-    matched(symbol) {
-      console.log(`matched ${JSON.stringify(symbol)}`);
-    },
-    check(obj) {
-      console.log(`check ${JSON.stringify(obj)}`);
+    matched(rule, query, row) {
+      console.log(`rule ${JSON.stringify(rule)}`);
+      console.log(`query ${JSON.stringify(query)}`);
+      console.log(`row ${JSON.stringify(row)}`);
+      if (row) {
+        let list = [];
+        switch (row.key) {
+          case "type":
+            list = [
+              {
+                label: "ASN"
+              },
+              {
+                label: "TCL"
+              },
+              {
+                label: "AOC"
+              }
+            ];
+            break;
+          case "number":
+            list = [
+              {
+                label: "10001"
+              },
+              {
+                label: "10002"
+              },
+              {
+                label: "10003"
+              }
+            ];
+            break;
+          case "person":
+            list = [
+              {
+                label: "lizhili"
+              },
+              {
+                label: "dongqiang"
+              },
+              {
+                label: "zhouqinmin"
+              }
+            ];
+            break;
+
+          default:
+            list = [];
+            break;
+        }
+        this.loading = true;
+        setTimeout(() => {
+          this.loading = false;
+          this.options = list.filter(item => {
+            return item.label.toLowerCase().indexOf(query.toLowerCase()) > -1;
+          });
+        }, 300);
+      }
     }
   },
   mounted() {
@@ -206,20 +238,24 @@ export default {
 
 |    参数    |    说明      |   类型     |可选值  |默认值|
 | ---------  | ----------  | --------   |----  | ----- |
-| target      | textarea DOM    | HTMLTextAreaElement     |-     | false    |
-| value      | suggester 是否展示    | boolean     |-     | false    |
-| rules      | 匹配规则  [{"symbol": "@", "data": [ { "label": "label" }]    | array       |-     | -     |
+| value      | 选中时提取的对象    | Array     |-     | []    |
+| target      | 输入元素的dom    | HTMLTextAreaElement     |-     | -    |
+| rules      | 匹配规则     | array       |-     | -     |
+| debounce | 输入时防抖等待时间 | Number |-     | 300  |
 | minWidth | suggester 最小宽度 | string |-     | 180px  |
+| remote | 是否为远程远程匹配 | Boolean |-     | false  |
+| loading | 是否正在从远程获取数据 | Boolean |-     | false  |
+| options | 远程获取数据列表 | Array |-     | []  |
 
 ### vue-form Methods
 
 |  方法名 |    说明                    |   参数      |
 |-------- |------                      |------       |
-|isShow  |检测 suggester 是否需要展示    |    -   |
+|change  |触发匹配的方法    |    -   |
 
 ### vue-form Events
 
 |  方法名 |    说明                    |   回调参数      |
 |-------- |------                      |------       |
-|matched  |suggester 显示时触发    |    匹配到的符号 string   |
-|check  |suggester 点击或回车选中item时触发    |    选中的对象 object   |
+|matched  |匹配成功时触发    |    匹配规则对应的字符串，匹配内容，规则对象    |
+|change  |suggester 选中item时触发    |    匹配到的集合    |

@@ -12,10 +12,9 @@
       <textarea ref="textarea" class="textarea" rows="10" @input="input"></textarea>
     </div>
     <vue-textarea-suggester
-      v-model="show"
+      v-model="extracts"
       :target="target"
       :rules="rules"
-      @check="check"
       @matched="matched"
       ref="suggester"
     />
@@ -28,13 +27,15 @@
       @change="change"
     />
     <vue-textarea-suggester
-      v-model="mdShow"
+      remote
+      v-model="extracts"
       :target="mdTarget"
       :rules="rules"
-      @check="check"
+      :options="options"
+      :loading="loading"
       @matched="matched"
       ref="mdSuggester"
-    />
+    ></vue-textarea-suggester>
   </div>
 </template>
 
@@ -43,9 +44,7 @@ export default {
   name: "app",
   data() {
     return {
-      show: false,
       target: null,
-      mdShow: false,
       mdTarget: null,
       value: `## suggester 显示时\n- 响应键盘上下左右按钮事件\n- 回车或鼠标左键点击item触发选中\n@blryli `,
       toolbars: {
@@ -61,56 +60,107 @@ export default {
         subfield: true, // 单双栏模式
         fullscreen: true // 全屏编辑
       },
+      // 提取字段替换成需要的字段
       valueTecalculation: params => {
-        this.rules.forEach(da => {
-          da.data.forEach(d => {
-            const rep = `${da.symbol}${d.label}`;
-            params = params.replace(
-              new RegExp(rep, "g"),
-              `[${da.symbol}${d.label}](/${d.label})`
-            );
-          });
+        this.extracts.forEach(d => {
+          const rep = `${d.rule}${d.label}`;
+          params = params.replace(
+            new RegExp(rep, "g"),
+            `[${d.rule}${d.label}](/${d.label})`
+          );
         });
         return params;
       },
+      loading: false,
+      options: [],
+      extracts: [],
       rules: [
         {
-          symbol: "@",
-          data: [
-            {
-              label: "blryli"
-            },
-            {
-              label: "dongqiang"
-            }
-          ]
+          rule: /![A-Za-z0-9]+:/,
+          key: "number",
+          data: [{ label: "11111" }, { label: "22222" }]
         },
         {
-          symbol: "#",
-          data: [
-            {
-              label: "order001"
-            },
-            {
-              label: "order002"
-            }
-          ]
+          rule: /!/,
+          key: "type",
+          enterAdd: ":",
+          enterExtract: false,
+          data: [{ label: "aaaa" }, { label: "bbbb" }]
+        },
+        {
+          rule: /@/,
+          key: "person",
+          data: [{ label: "xxxx" }, { label: "yyyy" }]
         }
       ]
     };
   },
   methods: {
-    change() {
-      this.$refs.mdSuggester.isShow();
-    },
     input() {
-      this.$refs.suggester.isShow();
+      this.$refs.suggester.change();
     },
-    matched(symbol) {
-      console.log(`matched ${JSON.stringify(symbol)}`);
+    change() {
+      this.$refs.mdSuggester.debouncedChange();
     },
-    check(obj) {
-      console.log(`check ${JSON.stringify(obj)}`);
+    matched(rule, query, row) {
+      console.log(`rule ${JSON.stringify(rule)}`);
+      console.log(`query ${JSON.stringify(query)}`);
+      console.log(`row ${JSON.stringify(row)}`);
+      if (row) {
+        let list = [];
+        switch (row.key) {
+          case "type":
+            list = [
+              {
+                label: "ASN"
+              },
+              {
+                label: "TCL"
+              },
+              {
+                label: "AOC"
+              }
+            ];
+            break;
+          case "number":
+            list = [
+              {
+                label: "10001"
+              },
+              {
+                label: "10002"
+              },
+              {
+                label: "10003"
+              }
+            ];
+            break;
+          case "person":
+            list = [
+              {
+                label: "lizhili"
+              },
+              {
+                label: "dongqiang"
+              },
+              {
+                label: "zhouqinmin"
+              }
+            ];
+            break;
+
+          default:
+            list = [];
+            break;
+        }
+        this.loading = true;
+        setTimeout(() => {
+          this.loading = false;
+          this.options = list.filter(item => {
+            return item.label.toLowerCase().indexOf(query.toLowerCase()) > -1;
+          });
+        }, 300);
+      }
     }
   },
   mounted() {
@@ -134,7 +184,7 @@ body {
 .box {
   padding: 10px;
   border: 1px solid #ddd;
-  box-shadow: 1px 1px 5px rgba(0, 0, 0, .1);
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
 }
 .textarea {
   width: 100%;
@@ -145,5 +195,8 @@ body {
   line-height: 1.5;
   font-family: Menlo, "Ubuntu Mono", Consolas, "Courier New", "Microsoft Yahei",
     "Hiragino Sans GB", "WenQuanYi Micro Hei", sans-serif;
+}
+.p-40 {
+  padding: 40px;
 }
 </style>

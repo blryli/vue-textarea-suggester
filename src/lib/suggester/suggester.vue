@@ -1,14 +1,19 @@
 <template>
   <div
-    v-show="value"
     class="suggester"
-    :style="{'--minWidth': minWidth, 'display': value ? 'block' : 'none'}"
+    :style="{'--minWidth': minWidth, 'display': matchedStr ? 'block' : 'none'}"
   >
-    <ul>
-      <li v-if="!data.length">
+    <ul v-show="matchedStr" class="suggester-list">
+      <li class="suggester-list-item" v-show="remote && loading">
         <img width="18" src="../../assets/loading.gif" alt>
       </li>
-      <li v-for="(d, i) in data" :key="i" :class="{active: i === activeIndex}" @click="enter(i)">
+      <li
+        class="suggester-list-item"
+        v-for="(d, i) in data"
+        :key="i"
+        :class="{active: i === activeIndex}"
+        @click="enter(i)"
+      >
         <slot :data="d">
           <strong>{{d.label}}</strong>
         </slot>
@@ -19,14 +24,14 @@
 
 <script>
 import { getCursorPos } from "./getCursorPos";
-import { on, off } from "../../utils/dom";
+import { on, off, debounce } from "../../utils/dom";
 
 export default {
   name: "vue-textarea-suggester",
   props: {
     value: {
-      type: Boolean,
-      default: false
+      type: Array,
+      default: () => []
     },
     rules: {
       type: Array,
@@ -36,79 +41,94 @@ export default {
     minWidth: {
       type: String,
       default: "180px"
-    }
+    },
+    options: {
+      type: Array,
+      default: () => []
+    },
+    debounce: {
+      type: Number,
+      default: 300
+    },
+    loading: Boolean,
+    remote: Boolean
   },
   data() {
     return {
+      data: [],
       startIndex: null,
       focusIndex: null,
-      data: [],
-      activeIndex: null
+      activeIndex: null,
+      matchedRule: {},
+      matchedStr: null
     };
   },
   watch: {
-    value(val) {
-      !val && (this.data = []);
+    options(val) {
+      this.remote && (this.data = val);
     }
   },
+  created() {
+    this.debouncedChange = debounce(this.debounce, this.change);
+  },
   methods: {
-    show(startIndex) {
-      const elem = this.target;
-      const p = getCursorPos.getInputPositon(elem, startIndex);
-      const s = this.$el;
-      s.style.top = p.bottom + "px";
-      s.style.left = p.left + "px";
+    showPosition() {
+      // !document.body.contains(this.$el) && document.body.appendChild(this.$el);
+      this.activeIndex = 0;
+      const pos = getCursorPos.getInputPositon(this.target, this.startIndex);
+      this.$el.style.top = pos.bottom + "px";
+      this.$el.style.left = pos.left + "px";
     },
-    isShow(count) {
+    change(count) {
       if (!this.target) return;
-      const val = this.target.value;
+      const value = this.target.value;
       this.focusIndex = getCursorPos._getFocus(this.target);
       if (count) {
         if (count === "-") {
           this.focusIndex = this.focusIndex > 0 ? this.focusIndex - 1 : 0;
         } else if (count === "+") {
           this.focusIndex =
-            this.focusIndex < val.length ? this.focusIndex + 1 : val.length;
+            this.focusIndex < value.length ? this.focusIndex + 1 : value.length;
         }
       }
-      for (let i = 0; i < this.rules.length; i++) {
-        const rule = this.rules[i];
-        const fristBlank = val.lastIndexOf(" ", this.focusIndex - 1);
-        const fristEnter = val.lastIndexOf("\n", this.focusIndex - 1);
-        const startIndex = (this.startIndex =
-          fristBlank > fristEnter ? fristBlank + 1 : fristEnter + 1);
-        const str = val.substring(startIndex, this.focusIndex);
-        const strFrist = str.substring(0, 1);
-        const strEnd = str.substring(1);
-        if (
-          strFrist &&
-          strFrist === rule.symbol &&
-          rule.data.find(d =>
-            d.label.toLowerCase().includes(strEnd.toLowerCase())
-          )
-        ) {
-          this.data = rule.data.filter(d =>
-            d.label.toLowerCase().includes(strEnd.toLowerCase())
+      // 确定起始点并截取字符串
+      const fristBlank = value.lastIndexOf(" ", this.focusIndex - 1);
+      const fristEnter = value.lastIndexOf("\n", this.focusIndex - 1);
+      this.startIndex =
+        fristBlank > fristEnter ? fristBlank + 1 : fristEnter + 1;
+      const str = value.substring(this.startIndex, this.focusIndex);
+
+      // 自下而上匹配规则
+      this.matchedRule = this.rules.find(d => d.rule.exec(str));
+      this.matchedStr =
+        this.matchedRule && this.matchedRule.rule
+          ? str.match(this.matchedRule.rule)[0]
+          : null;
+      if (this.matchedStr) {
+        const query = str.substring(this.matchedStr.length);
+        // 是否远程匹配
+        if (this.remote) {
+          this.data = [];
+        } else {
+          this.data = (this.matchedRule.data || []).filter(
+            d => d.label && d.label.indexOf(query) > -1
           );
-          this.show(startIndex);
-          this.activeIndex = 0;
-          this.$emit("input", true);
-          !this.value && this.$emit("matched", strFrist);
-          return;
         }
+        this.$emit("matched", this.matchedStr, query, this.matchedRule);
+        this.showPosition();
+        return;
       }
-      this.$emit("input", false);
     },
     keyDown(e) {
       switch (e.key) {
         case "ArrowLeft":
-          this.isShow("-");
+          this.change("-");
           break;
         case "ArrowRight":
-          this.isShow("+");
+          this.change("+");
           break;
         case "ArrowUp":
-          if (this.value) {
+          if (this.matchedStr) {
             e.preventDefault();
             this.activeIndex =
               this.activeIndex > 0
@@ -117,7 +137,7 @@ export default {
           }
           break;
         case "ArrowDown":
-          if (this.value) {
+          if (this.matchedStr) {
             e.preventDefault();
             this.activeIndex =
               this.activeIndex < this.data.length - 1
@@ -126,7 +146,7 @@ export default {
           }
           break;
         case "Enter":
-          if (this.value) {
+          if (this.matchedStr) {
             e.preventDefault();
             this.enter();
           }
@@ -136,43 +156,55 @@ export default {
       }
     },
     enter(index) {
-      if (!this.value || !this.target) return;
-      const val = this.target.value;
+      if (!this.matchedStr || !this.target) return;
+      const value = this.target.value;
       const activeIndex = index !== undefined ? index : this.activeIndex;
-      const obj = this.data[activeIndex];
-      const startStr = val.slice(0, this.startIndex + 1);
-      const endStr = val.slice(this.focusIndex);
-      this.target.value = `${startStr}${obj.label} ${endStr}`;
+      // 是否远程匹配
+      const option = this.remote
+        ? this.options[activeIndex]
+        : this.data[activeIndex];
+      const startStr = value.slice(0, this.startIndex);
+      const endStr = value.slice(this.focusIndex);
+      if (
+        this.matchedRule.enterExtract !== false &&
+        !this.value.find(
+          d => d.rule === this.matchedStr && d.label === option.label
+        )
+      ) {
+        const merge = this.value.concat([
+          { rule: this.matchedStr, label: option.label }
+        ]);
+        this.$emit("input", merge);
+        this.$emit("change", merge);
+      }
+      // 拼接字符串
+      this.target.value = `${startStr}${this.matchedStr}${option.label}${this
+        .matchedRule.enterAdd || " "}${endStr}`;
       if (
         typeof this.target.selectionStart === "number" &&
         typeof this.target.selectionEnd === "number"
       ) {
         this.target.selectionStart = this.target.selectionEnd =
-          startStr.length + obj.label.length + 1;
+          startStr.length + this.matchedStr.length + option.label.length + 1;
       } else {
         alert("Error: Browser version is too low");
       }
+      this.matchedStr = null;
       this.target.focus();
-      this.$emit("input", false);
-      this.$emit("check", obj);
-    },
-    windowClick(e) {
-      !e.target.contains(this.target) && this.$emit("input", false);
+      this.change()
     }
   },
   mounted() {
     this.$nextTick(() => {
       setTimeout(() => {
         on(this.target, "keydown", this.keyDown);
-        on(this.target, "click", this.isShow);
-        on(window, "click", this.windowClick);
-      }, 0);
+        on(this.target, "click", this.change);
+      }, 100);
     });
   },
   beforeDestroy() {
     off(this.target, "keydown", this.keyDown);
-    off(this.target, "click", this.isShow);
-    off(window, "click", this.windowClick);
+    off(this.target, "click", this.change);
   }
 };
 </script>
@@ -180,30 +212,33 @@ export default {
 <style lang="scss" scoped>
 .suggester {
   background: #fff;
-  border: 1px solid #dfe2e5;
   border-radius: 3px;
   box-shadow: 0 0 5px rgba(27, 31, 35, 0.1);
   cursor: pointer;
   left: 0;
   min-width: var(--minWidth);
-  position: absolute;
+  position: fixed;
   top: 0;
   z-index: 1501;
   font-size: 14px;
-  ul {
+  .suggester-list {
     list-style: none;
     margin: 0;
     padding: 0;
   }
-  li {
-    border-bottom: 1px solid #dfe2e5;
+  .suggester-list-item {
+    border: 1px solid #dfe2e5;
     display: block;
     font-weight: 600;
     padding: 5px 10px;
+    &:not(:last-child) {
+      border-bottom: 0;
+    }
     &:hover,
     &.active,
     &[aria-selected="true"] {
       background: #0366d6;
+      border-color: #0366d6;
       color: #fff;
       text-decoration: none;
     }
