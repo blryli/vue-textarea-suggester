@@ -234,7 +234,7 @@ export default {
 </script>
 ```
 
-### vue-form Attributes
+### vue-textarea-suggester Attributes
 
 |    参数    |    说明      |   类型     |可选值  |默认值|
 | ---------  | ----------  | --------   |----  | ----- |
@@ -244,16 +244,25 @@ export default {
 | debounce | 输入时防抖等待时间 | Number |-     | 300  |
 | minWidth | suggester 最小宽度 | string |-     | 180px  |
 | remote | 是否为远程远程匹配 | Boolean |-     | false  |
-| loading | 是否正在从远程获取数据 | Boolean |-     | false  |
-| options | 远程获取数据列表 | Array |-     | []  |
+| loading | remote为true时，是否正在从远程获取数据 | Boolean |-     | false  |
+| options | remote为true时，远程获取数据列表 | Array |-     | []  |
 
-### vue-form Methods
+### rules Attributes
+
+|    参数    |    说明      |   类型     |可选值  |默认值|
+| ---------  | ----------  | --------   |----  | ----- |
+| rule      | 匹配规则    | 正则     |-     | -    |
+| enterAdd      | 选中item时 向末尾添加的字符    | string     |-     | 空格    |
+| enterExtract      | 选中item时 是否提取内容     | array       |-     | true     |
+| data      | 匹配规则成功时，suggester显示列表，remote为true时无效 | array       |-     | []    |
+
+### vue-textarea-suggester Methods
 
 |  方法名 |    说明                    |   参数      |
 |-------- |------                      |------       |
 |change  |触发匹配的方法    |    -   |
 
-### vue-form Events
+### vue-textarea-suggester Events
 
 |  方法名 |    说明                    |   回调参数      |
 |-------- |------                      |------       |

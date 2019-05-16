@@ -1,7 +1,7 @@
 {
   "name": "vue-textarea-suggester",
   "description": "A Vue.js project",
-  "version": "1.0.02",
+  "version": "1.0.2",
   "author": "lizhili <405549416@qq.com>",
   "license": "MIT",
   "private": false,
