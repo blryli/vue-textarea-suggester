@@ -46,7 +46,7 @@ export default {
     return {
       target: null,
       mdTarget: null,
-      value: `## suggester 显示时\n- 响应键盘上下左右按钮事件\n- 回车或鼠标左键点击item触发选中\n@blryli `,
+      value: `## suggester 显示时\n 响应键盘上下左右按钮事件\n 回车或鼠标左键点击item触发选中\n 已配置符号 @ ! `,
       toolbars: {
         preview: true, // 预览
         bold: true, // 粗体
